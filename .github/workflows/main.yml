@@ -1,0 +1,78 @@
+name: CogniSync CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: ./client
+
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: ./client
+
+      - name: Install backend dependencies
+        run: pip install -r requirements.txt
+        working-directory: ./server
+
+      - name: Lint backend (Black)
+        run: black --check app/
+        working-directory: ./server
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: --verbose --log-format json
+
+  audit:
+    runs-on: ubuntu-latest
+    needs: lint-and-scan
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: npm audit
+        run: npm audit --audit-level=high
+        working-directory: ./client
+
+      - name: Python safety check
+        uses: pyupio/safety-action@v1
+        with:
+          pipfile: ./server/requirements.txt
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint-and-scan
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest
+        working-directory: ./server
+
+      - name: Run tests
+        run: pytest
+        working-directory: ./server

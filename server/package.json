@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "prisma": "latest"
+  },
+  "dependencies": {
+    "@prisma/client": "latest"
+  }
+}

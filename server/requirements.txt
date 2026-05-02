@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+python-multipart
+celery[redis]
+redis
+langchain
+openai
+pinecone
+python-dotenv
+pydantic
+pydantic-settings
+black
+pytest
+httpx
+pypdf
